@@ -1,0 +1,30 @@
+--i want to see american born hiv data 
+select year_reported, location, country_birth, cases
+from HivDemo
+where country_birth = 'Born in U.S., possessions or territories,  or not specified';
+
+--i'm curious to find which states have the highest records
+select year_reported, location, country_birth, MAX(cases) as HighestCaseCount
+from HivDemo
+where country_birth = 'Born in U.S., possessions or territories,  or not specified'
+group by location
+limit 10;
+
+---im curious to see where the area with the most cases are
+select location, MAX(cases) AS HighestCaseCount
+from HivDemo
+where country_birth = 'Born in U.S., possessions or territories,  or not specified'
+  and location like '%pediatric or not in MSA%'
+group by location
+order by HighestCaseCount desc
+limit 10;
+
+---curious to see the most common exposure per age 
+select Age_Diagnosis, HIV_Exposure_Category, Cases
+from HivExposure h
+where Cases = (
+    select MAX(Cases)
+    from HivExposure
+    where Age_Diagnosis = h.Age_Diagnosis
+)
+order by Age_Diagnosis;
