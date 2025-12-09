@@ -1,4 +1,4 @@
---temp table, i wanna see the max and sums but for the general area instead 
+--temp table, i wanna see the sums for the general area (n,s,w etc) of us born hiv cases
 select Location, HIV_Exposure_Category, SUM(Cases) AS TotalCasesPerArea
 from HivSummary
 where country_birth = 'Born in U.S., possessions or territories,  or not specified'
@@ -7,8 +7,7 @@ group by Location
 order by TotalCasesPerArea desc;
 select * from HivSummaryView;
 
-
---i'm curious to find which states have the highest records
+--i'm curious to find which specific us states have the highest records for us born hiv cases
 select year_reported, location, country_birth, MAX(cases) as HighestCaseCount
 from HivDemo
 where country_birth = 'Born in U.S., possessions or territories,  or not specified'
@@ -16,16 +15,7 @@ group by location
 order by HighestCaseCount desc
 limit 10;
 
----im curious to see where the area with the most cases are
-select location, MAX(cases) AS HighestCaseCount
-from HivDemo
-where country_birth = 'Born in U.S., possessions or territories,  or not specified'
-  and location like '%pediatric or not in MSA%'
-group by location
-order by HighestCaseCount desc
-limit 10;
-
----curious to see the most common exposure per age 
+---curious to see the most common exposure per age group
 select Age_Diagnosis, HIV_Exposure_Category, Cases
 from HivExposure h
 where Cases = (
@@ -35,4 +25,10 @@ where Cases = (
 )
 order by Age_Diagnosis;
 
+---curious to see the top 5 most common exposure categories 
+select HIV_Exposure_Category, age_diagnosis, SUM(Cases) AS TotalCases
+from HivExposure
+group by HIV_Exposure_Category
+order by TotalCases desc
+limit 6;
 
