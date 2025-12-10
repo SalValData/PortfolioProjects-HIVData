@@ -1,0 +1,31 @@
+-- 1. Sale Price Trends Over Time
+SELECT strftime('%Y-%m', recording_date) AS sale_month,
+       ROUND(AVG(sale_price), 2) AS avg_sale_price
+FROM PhillyHousing_clean
+GROUP BY sale_month
+ORDER BY sale_month;
+
+-- 2. Average Sale Price by ZIP (first 5 digits)
+SELECT SUBSTR(zip_code, 1, 5) AS zip5,
+       ROUND(AVG(sale_price), 2) AS avg_sale_price,
+       COUNT(*) AS num_sales
+FROM PhillyHousing_clean
+GROUP BY zip5
+ORDER BY avg_sale_price DESC;
+
+-- 3. Assessed Value vs. Sale Price by Ward
+SELECT ward,
+       ROUND(AVG(sale_price), 2) AS avg_sale_price,
+       ROUND(AVG(assessed_value), 2) AS avg_assessed_value
+FROM PhillyHousing_clean
+GROUP BY ward
+ORDER BY ward;
+
+-- 4. Tax Burden Relative to Sale Price
+SELECT ward,
+       ROUND(AVG(state_tax_amount + local_tax_amount), 2) AS avg_total_tax,
+       ROUND(AVG(sale_price), 2) AS avg_sale_price,
+       ROUND(AVG((state_tax_amount + local_tax_amount) / sale_price * 100), 2) AS avg_tax_percent
+FROM PhillyHousing_clean
+GROUP BY ward
+ORDER BY avg_tax_percent DESC;
