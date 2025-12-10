@@ -1,1 +1,84 @@
+---downloaded a cvs and imported it into sql from philly open data with 1,000,000 rows for data cleaning 
+
+1)--standardize the date format --first i need to alter the table and add a new column and then update the information 
+ALTER TABLE PhillyHousing ADD COLUMN displayDateConverted TEXT;
+UPDATE PhillyHousing
+SET displayDateConverted = substr(display_date, 1, 10);
+---now i can standardize the date 
+UPDATE PhillyHousing
+SET display_date   = substr(display_date, 1, 10),
+    receipt_date   = substr(receipt_date, 1, 10),
+    recording_date = substr(recording_date, 1, 10),
+    document_date  = substr(document_date, 1, 10);
+select display_date from PhillyHousing; ( to check that it worked, it did)
+
+2)-- Look at rows with missing street_address
+SELECT * FROM PhillyHousing
+WHERE street_address IS NULL
+   OR TRIM(street_address) = '';  (may be recorded as a string so added this)
+-- i also wanna get a count so i know 
+SELECT 
+    COUNT(*) AS total_rows,
+    SUM(CASE WHEN street_address IS NULL THEN 1 ELSE 0 END) AS null_count,
+    SUM(CASE WHEN TRIM(street_address) = '' THEN 1 ELSE 0 END) AS blank_count
+FROM PhillyHousing;
+--- okay the same amount shows for blank count, none are null
+---making the blank counts into nulls so its easier for me moving forward
+UPDATE PhillyHousing
+SET street_address = NULL
+WHERE TRIM(street_address) = '';
+
+-- Try to populate missing street_address by joining on document_id (self join)
+SELECT a.document_id, a.street_address, b.document_id, b.street_address,
+       ISNULL(a.street_address, b.street_address) AS FilledAddress
+FROM PortfolioProject.dbo.PhillyHousing a
+JOIN PortfolioProject.dbo.PhillyHousing b
+    ON a.document_id = b.document_id
+   AND a.record_id <> b.record_id
+WHERE a.street_address IS NULL;
+-- this dindt work like i wanted it to so moving on, the file may be too big
+
+UPDATE PhillyHousing
+SET street_address = TRIM(
+    COALESCE(address_low, '') || ' ' ||
+    COALESCE(street_predir, '') || ' ' ||
+    COALESCE(street_name, '') || ' ' ||
+    COALESCE(street_suffix, '') || ' ' ||
+    COALESCE(street_postdir, '')
+)
+WHERE street_address IS NULL;
+---checking to see if that worked and it did 
+
+SELECT COUNT(*) AS still_missing
+FROM PhillyHousing
+WHERE street_address IS NULL;
+
+
+3)--- checking for duplicate data 
+SELECT document_id, street_address, COUNT(*) 
+FROM PhillyHousing
+GROUP BY document_id, street_address
+HAVING COUNT(*) > 1;
+
+---now i will delete and verify
+DELETE FROM PhillyHousing
+WHERE rowid NOT IN (
+    SELECT MIN(rowid)
+    FROM PhillyHousing
+    GROUP BY document_id, street_address
+);
+SELECT document_id, street_address, COUNT(*) AS cnt
+FROM PhillyHousing
+GROUP BY document_id, street_address
+HAVING COUNT(*) > 1;
+
+
+
+
+
+
+
+
+
+
 
